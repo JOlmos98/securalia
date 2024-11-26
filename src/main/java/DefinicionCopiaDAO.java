@@ -1,10 +1,12 @@
 import java.io.File;
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 
 public class DefinicionCopiaDAO {
 	
@@ -245,7 +247,8 @@ public class DefinicionCopiaDAO {
 	public static boolean leerFechas() {
 		
 		String sql = "SELECT * FROM DefinicionesCopias";
-	    
+		boolean copiaDisponible=false;
+		
 	    try (Connection con = DriverManager.getConnection(url, usuario, password)) {
 	        // Preparamos la consulta
 	        try (PreparedStatement ps = con.prepareStatement(sql)) {
@@ -253,29 +256,46 @@ public class DefinicionCopiaDAO {
 	            // Ejecutamos la consulta y obtenemos el ResultSet
 	            try (ResultSet rs = ps.executeQuery()) {
 	                if (rs.next()) { // Verificamos si el registro existe
+	                	
 	                    // Mostramos los datos del registro
-                		System.out.println("ID: " + rs.getInt("Id")+" || "+"Nombre: " + rs.getString("Nombre")+" || "+"Dir. Origen: "+rs.getString("DirectorioOrigen")+" || "+"Dir. Destino: "+rs.getString("DirectorioDestino")+" || "+"Intervalo: " + rs.getString("IntervaloDias")+" || "+"Fecha: " + rs.getString("FechaUltimaCopia"));
-	                	while (rs.next()) {
-	                		System.out.println("ID: " + rs.getInt("Id")+" || "+"Nombre: " + rs.getString("Nombre")+" || "+"Dir. Origen: "+rs.getString("DirectorioOrigen")+" || "+"Dir. Destino: "+rs.getString("DirectorioDestino")+" || "+"Intervalo: " + rs.getString("IntervaloDias")+" || "+"Fecha: " + rs.getString("FechaUltimaCopia"));
-		                    //System.out.println("ID: " + rs.getInt("Id"));
-		                    //System.out.println("Nombre: " + rs.getString("Nombre"));
-		                    //System.out.println("Dir. Origen: "+rs.getString("DirectorioOrigen"));
-		                    //System.out.println("Dir. Destino: "+rs.getString("DirectorioDestino"));
-		                    //System.out.println("Intervalo: " + rs.getString("IntervaloDias"));
-		                    //System.out.println("Fecha: " + rs.getString("FechaUltimaCopia"));
+                		//System.out.println("ID: " + rs.getInt("Id")+" || "+"Nombre: " + rs.getString("Nombre")+" || "+"Dir. Origen: "+rs.getString("DirectorioOrigen")+" || "+"Dir. Destino: "+rs.getString("DirectorioDestino")+" || "+"Intervalo: " + rs.getString("IntervaloDias")+" || "+"Fecha: " + rs.getString("FechaUltimaCopia"));
+                		if (ChronoUnit.DAYS.between(LocalDate.parse(rs.getString("FechaUltimaCopia")), LocalDate.now())>=rs.getInt("IntervaloDias")) {
+                			System.out.println("Intervalo de días cumplido en el registro: "+rs.getInt("Id"));
+                			copiaDisponible=true;
+                			//Path dirOrigen=Paths.get(rs.getString("");
+                			//Path dirDestino=Paths.get(rs.getString("");
+                			//copiar(dirOrigen, dirDestino);
+                		};
+                		
+                		while (rs.next()) {
+	                		//System.out.println("ID: " + rs.getInt("Id")+" || "+"Nombre: " + rs.getString("Nombre")+" || "+"Dir. Origen: "+rs.getString("DirectorioOrigen")+" || "+"Dir. Destino: "+rs.getString("DirectorioDestino")+" || "+"Intervalo: " + rs.getString("IntervaloDias")+" || "+"Fecha: " + rs.getString("FechaUltimaCopia"));
+	                		if (ChronoUnit.DAYS.between(LocalDate.parse(rs.getString("FechaUltimaCopia")), LocalDate.now())>=rs.getInt("IntervaloDias")) {
+	                			System.out.println("Intervalo de días cumplido en el registro: "+rs.getInt("Id"));
+	                			copiaDisponible=true;
+	                			//Path dirOrigen=Paths.get(rs.getString("");
+	                			//Path dirDestino=Paths.get(rs.getString("");
+	                			//copiar(dirOrigen, dirDestino);
+	                		};
 	                	}
 	                    // Agrega aquí más columnas según las necesidades
 	                } else {
 	                    System.err.println("No se encontró ningún registro con el ID proporcionado.");
 	                }
 	            }
-	        }
+	        }		if (copiaDisponible) System.out.println("Copias realizadas."); else System.out.println("No hay copias a realizar.");
 	    } catch (SQLException ex) {
 	        System.err.println("Error al realizar la consulta.");
 	        ex.printStackTrace();
 	        return false;
 	    }
 	    return true; // Indica que el proceso se ejecutó correctamente
+	}
+	
+	public static boolean copiar(Path dirOrigen, Path dirDestino) {
+		
+		
+		
+		return true;
 	}
 	
 	public static void actualizarFechaUltimaCopia(int id) {
@@ -286,7 +306,7 @@ public class DefinicionCopiaDAO {
 	        	ps.setString(1, LocalDate.now().toString());
 	        	ps.setInt(2, id);
 	            ps.executeUpdate();
-	            System.out.println("Fecha actualizada del registro: "+id);
+	            System.out.println("Fecha de ultima copia actualizada del registro: "+id);
 	        }
 	    } catch (SQLException ex) {
 	        System.err.println("Error al realizar la consulta.");
