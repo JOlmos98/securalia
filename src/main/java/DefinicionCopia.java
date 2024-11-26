@@ -23,7 +23,6 @@ public class DefinicionCopia {
 	    this.fechaUltimaCopia = LocalDate.now();
 	}
 
-
 	//Métodos:
 	
 	@Override
@@ -33,6 +32,8 @@ public class DefinicionCopia {
 				+"\nFecha de última copia: "+fechaUltimaCopia;
 	}
 	
+	public static int getContadortId() {return contadortId;}
+	public static void setContadortId(int contadortId) {DefinicionCopia.contadortId = contadortId;}
 	public int getId() {return id;}
 	public String getNombre() {return nombre;}
 	public void setNombre(String nombre) {this.nombre = nombre;}
@@ -44,6 +45,5 @@ public class DefinicionCopia {
 	public void setIntervaloDias(int intervaloDias) {IntervaloDias = intervaloDias;}
 	public LocalDate getFechaUltimaCopia() {return fechaUltimaCopia;}
 	public void setFechaUltimaCopia(LocalDate fechaUltimaCopia) {this.fechaUltimaCopia = fechaUltimaCopia;}
-	
 	
 }
