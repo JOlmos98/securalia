@@ -4,20 +4,14 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
 
 public class DefinicionCopiaDAO {
 	
 	//Variables:
-	
 
-	
-	//Quiero que primero, si la encuentra aqui, use este path
-	//private static String url = "jdbc:sqlite:.\\src\\main\\resources\\securalia.db?journal_mode=WAL";
-	
-	//Y segundo, si la encuentra aqui, use este path
-	//private static String dbPath = new File("securalia.db").getAbsolutePath();
- //= "jdbc:sqlite:" + dbPath+"?journal_mode=WAL";
     private static File firstPath = new File(".\\src\\main\\resources\\securalia.db");
+    private static File secondPath = new File("securalia.db");
 	private static String url;
 	private static String usuario = "root";
 	private static String password = "";
@@ -31,24 +25,24 @@ public class DefinicionCopiaDAO {
 	        // Si el archivo existe en la primera ruta, usamos esa
 	        url = "jdbc:sqlite:.\\src\\main\\resources\\securalia.db?journal_mode=WAL";
 	        System.out.println("Usando base de datos en: " + firstPath.getAbsolutePath());
-	    } else {
+	    } else if (secondPath.exists()){
 	        // Si no existe, verificamos la segunda ruta (junto al JAR)
-	        File secondPath = new File("securalia.db");
-	        if (secondPath.exists()) {
-	            // Si el archivo existe junto al JAR, usamos esa
-	            url = "jdbc:sqlite:" + secondPath.getAbsolutePath() + "?journal_mode=WAL";
-	            System.out.println("Usando base de datos en: " + secondPath.getAbsolutePath());
-	        } else {
-	            // Si tampoco existe, creamos la base de datos en el segundo path
-	            url = "jdbc:sqlite:" + secondPath.getAbsolutePath() + "?journal_mode=WAL";
-	            System.out.println("Base de datos no encontrada. Creando nueva en: " + secondPath.getAbsolutePath());
-	            crearBaseDeDatos();
-	        }
+            // Si el archivo existe junto al JAR, usamos esa
+            url = "jdbc:sqlite:" + secondPath.getAbsolutePath() + "?journal_mode=WAL";
+            System.out.println("Usando base de datos en: " + secondPath.getAbsolutePath());
+        } else {
+	        // Si tampoco existe, creamos la base de datos en el segundo path
+	        url = "jdbc:sqlite:" + secondPath.getAbsolutePath() + "?journal_mode=WAL";
+	        System.out.println("Base de datos no encontrada. Creando nueva en: " + secondPath.getAbsolutePath());
+	        crearBaseDeDatos();
+	        
 	    }
 	}
 	
-	//Métodos:
-	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// ---------------------------------------- Métodos PROGRAMA 1: ----------------------------------------
+	////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 	private static void crearBaseDeDatos() {
 	    String crearTablaSQL =
 	        "CREATE TABLE IF NOT EXISTS DefinicionesCopias ("+
@@ -242,5 +236,61 @@ public class DefinicionCopiaDAO {
 	    }
 
 	    return true; // Indica que el proceso se ejecutó correctamente
+	}
+	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// ---------------------------------------- Métodos PROGRAMA 2: ----------------------------------------
+	////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	public static boolean leerFechas() {
+		
+		String sql = "SELECT * FROM DefinicionesCopias";
+	    
+	    try (Connection con = DriverManager.getConnection(url, usuario, password)) {
+	        // Preparamos la consulta
+	        try (PreparedStatement ps = con.prepareStatement(sql)) {
+	            
+	            // Ejecutamos la consulta y obtenemos el ResultSet
+	            try (ResultSet rs = ps.executeQuery()) {
+	                if (rs.next()) { // Verificamos si el registro existe
+	                    // Mostramos los datos del registro
+                		System.out.println("ID: " + rs.getInt("Id")+" || "+"Nombre: " + rs.getString("Nombre")+" || "+"Dir. Origen: "+rs.getString("DirectorioOrigen")+" || "+"Dir. Destino: "+rs.getString("DirectorioDestino")+" || "+"Intervalo: " + rs.getString("IntervaloDias")+" || "+"Fecha: " + rs.getString("FechaUltimaCopia"));
+	                	while (rs.next()) {
+	                		System.out.println("ID: " + rs.getInt("Id")+" || "+"Nombre: " + rs.getString("Nombre")+" || "+"Dir. Origen: "+rs.getString("DirectorioOrigen")+" || "+"Dir. Destino: "+rs.getString("DirectorioDestino")+" || "+"Intervalo: " + rs.getString("IntervaloDias")+" || "+"Fecha: " + rs.getString("FechaUltimaCopia"));
+		                    //System.out.println("ID: " + rs.getInt("Id"));
+		                    //System.out.println("Nombre: " + rs.getString("Nombre"));
+		                    //System.out.println("Dir. Origen: "+rs.getString("DirectorioOrigen"));
+		                    //System.out.println("Dir. Destino: "+rs.getString("DirectorioDestino"));
+		                    //System.out.println("Intervalo: " + rs.getString("IntervaloDias"));
+		                    //System.out.println("Fecha: " + rs.getString("FechaUltimaCopia"));
+	                	}
+	                    // Agrega aquí más columnas según las necesidades
+	                } else {
+	                    System.err.println("No se encontró ningún registro con el ID proporcionado.");
+	                }
+	            }
+	        }
+	    } catch (SQLException ex) {
+	        System.err.println("Error al realizar la consulta.");
+	        ex.printStackTrace();
+	        return false;
+	    }
+	    return true; // Indica que el proceso se ejecutó correctamente
+	}
+	
+	public static void actualizarFechaUltimaCopia(int id) {
+		String sql="UPDATE DefinicionesCopias SET FechaUltimaCopia=? WHERE Id=?";
+		
+	    try (Connection con=DriverManager.getConnection(url, usuario, password)) {
+	        try (PreparedStatement ps = con.prepareStatement(sql)) {
+	        	ps.setString(1, LocalDate.now().toString());
+	        	ps.setInt(2, id);
+	            ps.executeUpdate();
+	            System.out.println("Fecha actualizada del registro: "+id);
+	        }
+	    } catch (SQLException ex) {
+	        System.err.println("Error al realizar la consulta.");
+	        ex.printStackTrace();
+	    }
 	}
 }

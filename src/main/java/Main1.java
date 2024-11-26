@@ -8,7 +8,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Scanner;
 
-public class main {
+public class Main1 {
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
