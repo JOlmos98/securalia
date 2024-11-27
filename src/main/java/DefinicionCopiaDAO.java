@@ -29,20 +29,20 @@ public class DefinicionCopiaDAO {
 	
 	static {
 	    if (firstPath.exists()) {
-	        // Si el archivo existe en la primera ruta, usamos esa
 	        url = "jdbc:sqlite:.\\src\\main\\resources\\securalia.db?journal_mode=WAL";
 	        System.out.println("Usando base de datos en: " + firstPath.getAbsolutePath());
 	    } else if (secondPath.exists()){
-	        // Si no existe, verificamos la segunda ruta (junto al JAR)
-            // Si el archivo existe junto al JAR, usamos esa
             url = "jdbc:sqlite:" + secondPath.getAbsolutePath() + "?journal_mode=WAL";
             System.out.println("Usando base de datos en: " + secondPath.getAbsolutePath());
         } else {
-	        // Si tampoco existe, creamos la base de datos en el segundo path
 	        url = "jdbc:sqlite:" + secondPath.getAbsolutePath() + "?journal_mode=WAL";
 	        System.out.println("Base de datos no encontrada. Creando nueva en: " + secondPath.getAbsolutePath());
 	        crearBaseDeDatos();
-	        
+	        /*
+	         * Este bloque static (se ejecuta con cada instancia de DefinicionCopiaDAO) valida si la base de
+	         * datos se encuentra en el directorio del proyecto, es decir, mientras lo desarrollo, si no,
+	         * valida que se encuentre en el mismo directorio que nuestro hipotético .jar, si no, la crea.
+	         */
 	    }
 	}
 	
@@ -50,7 +50,7 @@ public class DefinicionCopiaDAO {
 	// ---------------------------------------- Métodos PROGRAMA 1: ----------------------------------------
 	////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	private static void crearBaseDeDatos() {
+	private static void crearBaseDeDatos() { //Este método se ejecuta según el bloque static de arriba.
 	    String crearTablaSQL =
 	        "CREATE TABLE IF NOT EXISTS DefinicionesCopias ("+
 	            "\nId INTEGER PRIMARY KEY,"+
@@ -60,7 +60,6 @@ public class DefinicionCopiaDAO {
 	            "\nIntervaloDias INTEGER NOT NULL,"+
 	            "\nFechaUltimaCopia TEXT"+
 	            "\n);";
-
 	    try (Connection con = DriverManager.getConnection(url)) {
 	        try (PreparedStatement ps = con.prepareStatement(crearTablaSQL)) {
 	            ps.execute();
@@ -74,11 +73,8 @@ public class DefinicionCopiaDAO {
 	
 	public static boolean crear(DefinicionCopia dc) {
 		try (Connection con = DriverManager.getConnection(url,usuario,password)){
-			 
-			//System.out.println("1. Conexión establecida.");
 			try {
 				String sql = "INSERT INTO DefinicionesCopias (Id, Nombre, DirectorioOrigen, DirectorioDestino, IntervaloDias, FechaUltimaCopia) VALUES (?,?,?,?,?,?)";
-				//System.out.println("2. Ejecutando sentencia SQL: "+sql);
 				PreparedStatement ps = con.prepareStatement(sql);
 				ps.setInt(1, dc.getId());
 				ps.setString(2, dc.getNombre());
@@ -88,7 +84,6 @@ public class DefinicionCopiaDAO {
 				ps.setString(6, dc.getFechaUltimaCopia().toString());
 				System.out.println("Creando copia con ID: "+dc.getId());
 				ps.executeUpdate();
-				//System.out.println("3. Sentencia ejecutada.");
 			} 
 			
 			finally {con.close();}
@@ -103,21 +98,15 @@ public class DefinicionCopiaDAO {
 		return true;
 	}
 	
-	public static int getIdMax() {
-	    int maxId=-1; // Valor predeterminado en caso de que no haya resultados.
+	public static int getIdMax() { //Obtenemos el Id máximo para que el método crear() se ubique y cree a partir de ese Id estableciendo el contadorId, línea comentada en el método crear() del Main1.
+	    int maxId=-1;
 	    String sql="SELECT MAX(Id) AS maxId FROM DefinicionesCopias";
 	    
-	    try (Connection con = DriverManager.getConnection(url, usuario, password)) {
-	        //System.out.println("1. Conexión establecida.");
-	        
+	    try (Connection con = DriverManager.getConnection(url, usuario, password)) {	        
 	        try (PreparedStatement ps = con.prepareStatement(sql);
-	             ResultSet rs = ps.executeQuery()) { // Ejecutamos la consulta y obtenemos el ResultSet.
-	            
-	            //System.out.println("2. Ejecutando sentencia SQL: " + sql);
-	            
-	            if (rs.next()) { // Verificamos si hay resultado.
-	                maxId = rs.getInt("maxId"); // Obtenemos el valor de la columna "maxId".
-	                //System.out.println("ID máximo obtenido: " + maxId);
+	             ResultSet rs = ps.executeQuery()) { 
+	            if (rs.next()) { 
+	                maxId = rs.getInt("maxId"); 
 	            } else {
 	                System.out.println("No se encontraron registros en la tabla.");
 	            }
@@ -126,30 +115,23 @@ public class DefinicionCopiaDAO {
 	        System.err.println("Error en la consulta de ID.");
 	        ex.printStackTrace();
 	    }
-	    
-	    //System.out.println("ID obtenido: " + maxId);
-	    return maxId; // Devolvemos el ID máximo.
+	    return maxId;
 	}
 
 	public static boolean listar(int id) {
 	    String sql = "SELECT * FROM DefinicionesCopias WHERE Id=?";
 	    
 	    try (Connection con = DriverManager.getConnection(url, usuario, password)) {
-	        // Preparamos la consulta
 	        try (PreparedStatement ps = con.prepareStatement(sql)) {
-	            ps.setInt(1, id); // Asignamos el valor de 'id' al parámetro de la consulta
-	            
-	            // Ejecutamos la consulta y obtenemos el ResultSet
+	            ps.setInt(1, id);
 	            try (ResultSet rs = ps.executeQuery()) {
-	                if (rs.next()) { // Verificamos si el registro existe
-	                    // Mostramos los datos del registro
+	                if (rs.next()) { 
 	                    System.out.println("ID: " + rs.getInt("Id"));
 	                    System.out.println("Nombre: " + rs.getString("Nombre"));
 	                    System.out.println("Dir. Origen: "+rs.getString("DirectorioOrigen"));
 	                    System.out.println("Dir. Destino: "+rs.getString("DirectorioDestino"));
 	                    System.out.println("Intervalo: " + rs.getString("IntervaloDias"));
 	                    System.out.println("Fecha: " + rs.getString("FechaUltimaCopia"));
-	                    // Agrega aquí más columnas según las necesidades
 	                } else {
 	                    System.err.println("No se encontró ningún registro con el ID proporcionado.");
 	                }
@@ -160,7 +142,7 @@ public class DefinicionCopiaDAO {
 	        ex.printStackTrace();
 	        return false;
 	    }
-	    return true; // Indica que el proceso se ejecutó correctamente
+	    return true;
 	}
 
 	
@@ -168,24 +150,13 @@ public class DefinicionCopiaDAO {
 	    String sql = "SELECT * FROM DefinicionesCopias";
 	    
 	    try (Connection con = DriverManager.getConnection(url, usuario, password)) {
-	        // Preparamos la consulta
 	        try (PreparedStatement ps = con.prepareStatement(sql)) {
-	            
-	            // Ejecutamos la consulta y obtenemos el ResultSet
 	            try (ResultSet rs = ps.executeQuery()) {
-	                if (rs.next()) { // Verificamos si el registro existe
-	                    // Mostramos los datos del registro
+	                if (rs.next()) { 
                 		System.out.println("ID: " + rs.getInt("Id")+" || "+"Nombre: " + rs.getString("Nombre")+" || "+"Dir. Origen: "+rs.getString("DirectorioOrigen")+" || "+"Dir. Destino: "+rs.getString("DirectorioDestino")+" || "+"Intervalo: " + rs.getString("IntervaloDias")+" || "+"Fecha: " + rs.getString("FechaUltimaCopia"));
 	                	while (rs.next()) {
 	                		System.out.println("ID: " + rs.getInt("Id")+" || "+"Nombre: " + rs.getString("Nombre")+" || "+"Dir. Origen: "+rs.getString("DirectorioOrigen")+" || "+"Dir. Destino: "+rs.getString("DirectorioDestino")+" || "+"Intervalo: " + rs.getString("IntervaloDias")+" || "+"Fecha: " + rs.getString("FechaUltimaCopia"));
-		                    //System.out.println("ID: " + rs.getInt("Id"));
-		                    //System.out.println("Nombre: " + rs.getString("Nombre"));
-		                    //System.out.println("Dir. Origen: "+rs.getString("DirectorioOrigen"));
-		                    //System.out.println("Dir. Destino: "+rs.getString("DirectorioDestino"));
-		                    //System.out.println("Intervalo: " + rs.getString("IntervaloDias"));
-		                    //System.out.println("Fecha: " + rs.getString("FechaUltimaCopia"));
 	                	}
-	                    // Agrega aquí más columnas según las necesidades
 	                } else {
 	                    System.err.println("No se encontró ningún registro con el ID proporcionado.");
 	                }
@@ -196,21 +167,17 @@ public class DefinicionCopiaDAO {
 	        ex.printStackTrace();
 	        return false;
 	    }
-	    return true; // Indica que el proceso se ejecutó correctamente
+	    return true;
 	}
 	
-	public static boolean eliminar(int id) {
-	    String sql1 = "SELECT * FROM DefinicionesCopias WHERE Id=?";
+	public static boolean eliminar(int id) { //Aquí hago una primera consulta para mostrar el registro que se va a eliminar antes de eliminarlo.
+	    String sql1 = "SELECT * FROM DefinicionesCopias WHERE Id=?"; 
 	    String sql2 = "DELETE FROM DefinicionesCopias WHERE Id=?";
 	    try (Connection con = DriverManager.getConnection(url, usuario, password)) {
-	        // Preparamos la consulta
 	        try (PreparedStatement ps = con.prepareStatement(sql1)) {
-	            ps.setInt(1, id); // Asignamos el valor de 'id' al parámetro de la consulta
-	            
-	            // Ejecutamos la consulta y obtenemos el ResultSet
+	            ps.setInt(1, id);     
 	            try (ResultSet rs = ps.executeQuery()) {
-	                if (rs.next()) { // Verificamos si el registro existe
-	                    // Mostramos los datos del registro
+	                if (rs.next()) { 
 	                	System.err.println("DEFINICION DE COPIA ELIMINADA: "
 	                    +"\nID: " + rs.getInt("Id")
 	                    +"\nNombre: " + rs.getString("Nombre")
@@ -224,11 +191,8 @@ public class DefinicionCopiaDAO {
 	            }
 	        }
 	        try (PreparedStatement ps = con.prepareStatement(sql2)) {
-	            ps.setInt(1, id); // Asignamos el valor de 'id' al parámetro de la consulta
-	            
-	            // Ejecutamos la consulta y obtenemos el número de filas afectadas
+	            ps.setInt(1, id);
 	            int filasAfectadas = ps.executeUpdate();
-	            
 	            if (filasAfectadas > 0) {
 	                System.out.println("Registro con ID " + id + " eliminado correctamente.");
 	                return true;
@@ -241,8 +205,7 @@ public class DefinicionCopiaDAO {
 	        ex.printStackTrace();
 	        return false;
 	    }
-
-	    return true; // Indica que el proceso se ejecutó correctamente
+	    return true;
 	}
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -255,10 +218,7 @@ public class DefinicionCopiaDAO {
 		boolean copiaDisponible=false;
 		
 	    try (Connection con = DriverManager.getConnection(url, usuario, password)) {
-	        // Preparamos la consulta
 	        try (PreparedStatement ps = con.prepareStatement(sql)) {
-	            
-	            // Ejecutamos la consulta y obtenemos el ResultSet
 	            try (ResultSet rs = ps.executeQuery()) {
                 		while (rs.next()) {
 	                		if (ChronoUnit.DAYS.between(LocalDate.parse(rs.getString("FechaUltimaCopia")), LocalDate.now())>=rs.getInt("IntervaloDias")) {
@@ -277,7 +237,7 @@ public class DefinicionCopiaDAO {
 	        ex.printStackTrace();
 	        return false;
 	    }
-	    return true; // Indica que el proceso se ejecutó correctamente
+	    return true;
 	}
 	
 	public static boolean copiar(Path dirOrigen, Path dirDestino) {
@@ -291,7 +251,7 @@ public class DefinicionCopiaDAO {
 		int ultimoSlash=dirOrigen.toString().lastIndexOf("\\");
 		String dirOriNombre=dirOrigen.toString().substring(ultimoSlash);
 		Path dirDes=Paths.get(dirDestino.toString()+"\\"+dirOriNombre+"-"+fechaActual);
-				
+		
 		try {if (!Files.exists(dirDes)) Files.createDirectories(dirDes);
 		} catch(Exception e){
 			System.out.println("Error al crear el directorio de destino.");
@@ -301,25 +261,25 @@ public class DefinicionCopiaDAO {
 		
 		try (Stream<Path> paths = Files.walk(dirOri)){
 			
-			//REVISAR///////////////////////////////////////////////////
+			////////////////////////////// ↓ COPIAR ↓ //////////////////////////////
 			paths.forEach(path -> {
                    try {
-                        // Calculamos la ruta relativa dentro de pathOldDir
+                        //Calculamos la ruta relativa dentro de pathOldDir
                         Path relativePath = dirOri.relativize(path);
-                        // Obtenemos la ruta completa en el nuevo directorio
+                        //Obtenemos la ruta completa en el nuevo directorio
                         Path targetPath = dirDes.resolve(relativePath);
 
-                        // Si es un directorio lo que lee el Stream, lo creamos
+                        //Si es un directorio lo que lee el Stream, lo creamos
                         if (Files.isDirectory(path)) {
-                            if (!Files.exists(targetPath)) {
+                            if (!Files.exists(targetPath)) { //Evidentemente si no existe el directorio de destino, también se crea
                                 Files.createDirectories(targetPath);
                             }
                         }
-                        // Si es un archivo regular lo que lee el Stream, lo copiamos
+                        //Si es un archivo regular lo que lee el Stream, lo copiamos
                         else if (Files.isRegularFile(path)) {
                         	if (!Files.exists(targetPath)) {
-                                Files.createDirectories(targetPath.getParent()); // Asegurarse de que el directorio padre existe
-                                Files.copy(path, targetPath); // Copia el archivo
+                                Files.createDirectories(targetPath.getParent()); //Esta línea se asegura de que el directorio padre existe
+                                Files.copy(path, targetPath);
                         	} else System.out.println("El archivo "+path.toString()+" ya existe, no se copia.");
                         }
                     } catch (IOException e) {
@@ -327,9 +287,8 @@ public class DefinicionCopiaDAO {
                         e.printStackTrace();
                     }
                 });
-				//REVISAR///////////////////////////////////////////////////
+			////////////////////////////// ↑ COPIAR ↑ //////////////////////////////
 
-				
 			} catch (Exception e) {
 				System.err.println("Error al copiar el directorio.");
 				e.printStackTrace();
@@ -339,7 +298,7 @@ public class DefinicionCopiaDAO {
 		return true;
 	}
 	
-	public static void actualizarFechaUltimaCopia(int id) {
+	public static void actualizarFechaUltimaCopia(int id) { //Este método sencillamente, después de realizar una copia, establece la fechaUltimaCopia al día actual
 		String sql="UPDATE DefinicionesCopias SET FechaUltimaCopia=? WHERE Id=?";
 		
 	    try (Connection con=DriverManager.getConnection(url, usuario, password)) {

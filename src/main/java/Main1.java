@@ -14,7 +14,6 @@ public class Main1 {
 		// TODO Auto-generated method stub
 		try (Scanner sc=new Scanner(System.in)){
 		System.out.println("========== Securalia iniciado ==========");
-		
 		menuPrincipal(sc);
 		}
 	}
@@ -31,24 +30,29 @@ public class Main1 {
 				+ "\neliminar 	- Eliminar una definición de copia según su ID."
 				+ "\nsalir 		- Salir del programa.");
 		String input;
-		input=sc.nextLine();
-		while (!input.equalsIgnoreCase("crear")&&!input.equalsIgnoreCase("listar id")&&
-				!input.equalsIgnoreCase("listar todas")&&!input.equalsIgnoreCase("eliminar")
-				&&!input.equalsIgnoreCase("salir")&&!input.equalsIgnoreCase("exit")) {
-			System.err.println("\nComando NO reconocido.");
-			System.out.println("Escriba uno de los siguientes comandos:\n"
-					+ "\ncrear 		- Crear una nueva definición de copia."
-					+ "\nlistar id 	- Lista una definición de copia según su ID."
-					+ "\nlistar todas 	- Listar todas las definiciones existentes."
-					+ "\neliminar 	- Eliminar una definición de copia según su ID."
-					+ "\nsalir 		- Salir del programa.");
+		try {
 			input=sc.nextLine();
+			while (!input.equalsIgnoreCase("crear")&&!input.equalsIgnoreCase("listar id")&&
+					!input.equalsIgnoreCase("listar todas")&&!input.equalsIgnoreCase("eliminar")
+					&&!input.equalsIgnoreCase("salir")&&!input.equalsIgnoreCase("exit")) {
+				System.err.println("\nComando NO reconocido.");
+				System.out.println("Escriba uno de los siguientes comandos:\n"
+						+ "\ncrear 		- Crear una nueva definición de copia."
+						+ "\nlistar id 	- Lista una definición de copia según su ID."
+						+ "\nlistar todas 	- Listar todas las definiciones existentes."
+						+ "\neliminar 	- Eliminar una definición de copia según su ID."
+						+ "\nsalir 		- Salir del programa.");
+				input=sc.nextLine();
+			}
+			if (input.equalsIgnoreCase("crear")) crear(sc);
+			else if (input.equalsIgnoreCase("listar id")) listarId(sc);
+			else if (input.equalsIgnoreCase("listar todas")) listarTodas(sc);
+			else if (input.equalsIgnoreCase("eliminar")) eliminar(sc);
+			else if (input.equalsIgnoreCase("salir")||input.equalsIgnoreCase("exit")) salir();
+		} catch (Exception e) {
+			System.out.println("Excepcion.");
+			menuPrincipal(sc);
 		}
-		if (input.equalsIgnoreCase("crear")) crear(sc);
-		else if (input.equalsIgnoreCase("listar id")) listarId(sc);
-		else if (input.equalsIgnoreCase("listar todas")) listarTodas(sc);
-		else if (input.equalsIgnoreCase("eliminar")) eliminar(sc);
-		else if (input.equalsIgnoreCase("salir")||input.equalsIgnoreCase("exit")) salir();
 	}
 	
 	public static void crear(Scanner sc) {
@@ -58,47 +62,52 @@ public class Main1 {
 		String directorioDestino;
 		int intervaloDias;
 		
-		System.out.println("\n__________ Crear __________");
-		System.out.print("\nInserta nombre: ");
-		nombre=sc.nextLine();
-		
-		System.out.println("\nInserta el directorio de Origen: ");
-		directorioOrigen=sc.nextLine();
-		Path path1 = Paths.get(directorioOrigen);
-		while(!Files.exists(path1)||!Files.isDirectory(path1)){
-			System.err.print("\nDirectorio de origen NO válido.");
-			System.out.println("\nInserta el directorio de origen: ");
+		try {
+			System.out.println("\n__________ Crear __________");
+			System.out.print("\nInserta nombre: ");
+			nombre=sc.nextLine();
+			
+			System.out.println("\nInserta el directorio de Origen: ");
 			directorioOrigen=sc.nextLine();
-			path1 = Paths.get(directorioOrigen);
-		}
-		
-		System.out.println("\nInserta el directorio de destino: ");
-		directorioDestino=sc.nextLine();
-		Path path2 = Paths.get(directorioDestino);
-		while(!Files.exists(path2.getParent())||!Files.isDirectory(path2.getParent())){
-			System.err.print("\nDirectorio de destino NO válido.");
+			Path path1 = Paths.get(directorioOrigen);
+			while(!Files.exists(path1)||!Files.isDirectory(path1)){
+				System.err.print("\nDirectorio de origen NO válido.");
+				System.out.println("\nInserta el directorio de origen: ");
+				directorioOrigen=sc.nextLine();
+				path1 = Paths.get(directorioOrigen);
+			}
+			
 			System.out.println("\nInserta el directorio de destino: ");
 			directorioDestino=sc.nextLine();
-			path2 = Paths.get(directorioDestino);
-		}
-		
-		boolean numero1a365=false;
-		String input;
-		do {
-			System.out.println("\nInserta intervalo de días entre copias: ");
-			input=sc.nextLine();
-			for (int i=0;i<366;i++) if(input.equals(String.valueOf(i))) numero1a365=true;
-			if (numero1a365==false) System.err.println("Inserta un valor entre 1 y 365.");
-		}while(numero1a365==false);
-		intervaloDias=Integer.parseInt(input);
-		DefinicionCopia.setContadortId(DefinicionCopiaDAO.getIdMax()); //Esto hace que el programa, cada vez que se inicie, no empiece el id desde 0, ya que no dejaría meter registros si ya hay.
-		DefinicionCopia dc=new DefinicionCopia(nombre, directorioOrigen, directorioDestino, intervaloDias);
-		try {
-			DefinicionCopiaDAO.crear(dc);
-			menuPrincipal(sc);
+			Path path2 = Paths.get(directorioDestino);
+			while(!Files.exists(path2.getParent())||!Files.isDirectory(path2.getParent())){
+				System.err.print("\nDirectorio de destino NO válido.");
+				System.out.println("\nInserta el directorio de destino: ");
+				directorioDestino=sc.nextLine();
+				path2 = Paths.get(directorioDestino);
+			}
+			
+			boolean numero1a365=false;
+			String input;
+			do {
+				System.out.println("\nInserta intervalo de días entre copias: ");
+				input=sc.nextLine();
+				for (int i=0;i<366;i++) if(input.equals(String.valueOf(i))) numero1a365=true;
+				if (numero1a365==false) System.err.println("Inserta un valor entre 1 y 365.");
+			}while(numero1a365==false);
+			intervaloDias=Integer.parseInt(input);
+			DefinicionCopia.setContadortId(DefinicionCopiaDAO.getIdMax()); //Esto hace que el programa, cada vez que se inicie, no empiece el id desde 0, ya que no dejaría meter registros si ya hay.
+			DefinicionCopia dc=new DefinicionCopia(nombre, directorioOrigen, directorioDestino, intervaloDias);
+			try {
+				DefinicionCopiaDAO.crear(dc);
+				menuPrincipal(sc);
+			} catch (Exception e) {
+				System.out.println("Error al crear definición de copia.");
+				e.printStackTrace();
+				menuPrincipal(sc);
+			}
 		} catch (Exception e) {
-			System.out.println("Error al crear definición de copia.");
-			e.printStackTrace();
+			System.out.println("Error al crear.");
 			menuPrincipal(sc);
 		}
 	}
@@ -107,28 +116,31 @@ public class Main1 {
 		
 		String id;
 		int idNum;
-		
-		System.out.println("\n__________ Listar por Id __________\nmenu - para volver al menu principal.\nsalir - para salir del programa.");
-		System.out.print("\nInserta un Id: ");
-		id=sc.nextLine();
-		boolean isNumber=false;
-		for (int i=0;i<999;i++) if(id.equals(String.valueOf(i))) isNumber=true; //Valida si se ha introducido un número.
-		while (!id.equalsIgnoreCase("menu")&&!id.equalsIgnoreCase("salir")&&!id.equalsIgnoreCase("exit")&&!isNumber) {
-			System.err.println("Inserta un id.");
+		try {
+			System.out.println("\n__________ Listar por Id __________\nmenu - para volver al menu principal.\nsalir - para salir del programa.");
+			System.out.print("\nInserta un Id: ");
 			id=sc.nextLine();
+			boolean isNumber=false;
 			for (int i=0;i<999;i++) if(id.equals(String.valueOf(i))) isNumber=true; //Valida si se ha introducido un número.
+			while (!id.equalsIgnoreCase("menu")&&!id.equalsIgnoreCase("salir")&&!id.equalsIgnoreCase("exit")&&!isNumber) {
+				System.err.println("Inserta un id.");
+				id=sc.nextLine();
+				for (int i=0;i<999;i++) if(id.equals(String.valueOf(i))) isNumber=true; //Valida si se ha introducido un número.
+			}
+			
+			if (id.equalsIgnoreCase("menu")) {
+				menuPrincipal(sc);
+			} else if (id.equalsIgnoreCase("salir")||id.equalsIgnoreCase("exit")) {
+				salir();
+			} else if (isNumber) {
+				idNum=Integer.parseInt(id);
+				DefinicionCopiaDAO.listar(idNum);
+				menuPrincipal(sc);
+			} 
+		} catch (Exception e) {
+			System.out.println("Error al listar por Id.");
+			menuPrincipal(sc);
 		}
-		
-		if (id.equalsIgnoreCase("menu")) {
-			menuPrincipal(sc);
-		} else if (id.equalsIgnoreCase("salir")||id.equalsIgnoreCase("exit")) {
-			salir();
-		} else if (isNumber) {
-			idNum=Integer.parseInt(id);
-			DefinicionCopiaDAO.listar(idNum);
-			menuPrincipal(sc);
-		} //else System.err.println("Inserta un id.");
-		
 	}
 	
 	public static void listarTodas(Scanner sc) {
@@ -140,28 +152,31 @@ public class Main1 {
 		
 		String id;
 		int idNum;
-		
-		System.out.println("\n__________ Eliminar __________\nmenu - para volver al menu principal.\nsalir - para salir del programa.");
-		System.out.print("\nInserta un Id: ");
-		id=sc.nextLine();
-		boolean isNumber=false;
-		for (int i=0;i<999;i++) if(id.equals(String.valueOf(i))) isNumber=true; //Valida si se ha introducido un número.
-		while (!id.equalsIgnoreCase("menu")&&!id.equalsIgnoreCase("salir")&&!id.equalsIgnoreCase("exit")&&!isNumber) {
-			System.err.println("Inserta un id.");
+		try {
+			System.out.println("\n__________ Eliminar __________\nmenu - para volver al menu principal.\nsalir - para salir del programa.");
+			System.out.print("\nInserta un Id: ");
 			id=sc.nextLine();
+			boolean isNumber=false;
 			for (int i=0;i<999;i++) if(id.equals(String.valueOf(i))) isNumber=true; //Valida si se ha introducido un número.
+			while (!id.equalsIgnoreCase("menu")&&!id.equalsIgnoreCase("salir")&&!id.equalsIgnoreCase("exit")&&!isNumber) {
+				System.err.println("Inserta un id.");
+				id=sc.nextLine();
+				for (int i=0;i<999;i++) if(id.equals(String.valueOf(i))) isNumber=true; //Valida si se ha introducido un número.
+			}
+			
+			if (id.equalsIgnoreCase("menu")) {
+				menuPrincipal(sc);
+			} else if (id.equalsIgnoreCase("salir")||id.equalsIgnoreCase("exit")) {
+				salir();
+			} else if (isNumber) {
+				idNum=Integer.parseInt(id);
+				DefinicionCopiaDAO.eliminar(idNum);
+				menuPrincipal(sc);
+			} 
+		} catch (Exception e) {
+			System.out.println("Error al eliminar.");
+			menuPrincipal(sc);
 		}
-		
-		if (id.equalsIgnoreCase("menu")) {
-			menuPrincipal(sc);
-		} else if (id.equalsIgnoreCase("salir")||id.equalsIgnoreCase("exit")) {
-			salir();
-		} else if (isNumber) {
-			idNum=Integer.parseInt(id);
-			DefinicionCopiaDAO.eliminar(idNum);
-			menuPrincipal(sc);
-		} //else System.err.println("Inserta un id.");
-		
 	}
 	
 	public static void salir() {
