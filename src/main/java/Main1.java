@@ -75,7 +75,7 @@ public class Main1 {
 		System.out.println("\nInserta el directorio de destino: ");
 		directorioDestino=sc.nextLine();
 		Path path2 = Paths.get(directorioDestino);
-		while(!Files.exists(path2)||!Files.isDirectory(path2)){
+		while(!Files.exists(path2.getParent())||!Files.isDirectory(path2.getParent())){
 			System.err.print("\nDirectorio de destino NO válido.");
 			System.out.println("\nInserta el directorio de destino: ");
 			directorioDestino=sc.nextLine();

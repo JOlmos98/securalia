@@ -1,12 +1,17 @@
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.stream.Stream;
 
 public class DefinicionCopiaDAO {
 	
@@ -244,7 +249,7 @@ public class DefinicionCopiaDAO {
 	// ---------------------------------------- Métodos PROGRAMA 2: ----------------------------------------
 	////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	public static boolean leerFechas() {
+	public static boolean leerFechas() { //Este método usa copiar() y actualizarFechaUltimaCopia()
 		
 		String sql = "SELECT * FROM DefinicionesCopias";
 		boolean copiaDisponible=false;
@@ -255,32 +260,16 @@ public class DefinicionCopiaDAO {
 	            
 	            // Ejecutamos la consulta y obtenemos el ResultSet
 	            try (ResultSet rs = ps.executeQuery()) {
-	                if (rs.next()) { // Verificamos si el registro existe
-	                	
-	                    // Mostramos los datos del registro
-                		//System.out.println("ID: " + rs.getInt("Id")+" || "+"Nombre: " + rs.getString("Nombre")+" || "+"Dir. Origen: "+rs.getString("DirectorioOrigen")+" || "+"Dir. Destino: "+rs.getString("DirectorioDestino")+" || "+"Intervalo: " + rs.getString("IntervaloDias")+" || "+"Fecha: " + rs.getString("FechaUltimaCopia"));
-                		if (ChronoUnit.DAYS.between(LocalDate.parse(rs.getString("FechaUltimaCopia")), LocalDate.now())>=rs.getInt("IntervaloDias")) {
-                			System.out.println("Intervalo de días cumplido en el registro: "+rs.getInt("Id"));
-                			copiaDisponible=true;
-                			//Path dirOrigen=Paths.get(rs.getString("");
-                			//Path dirDestino=Paths.get(rs.getString("");
-                			//copiar(dirOrigen, dirDestino);
-                		};
-                		
                 		while (rs.next()) {
-	                		//System.out.println("ID: " + rs.getInt("Id")+" || "+"Nombre: " + rs.getString("Nombre")+" || "+"Dir. Origen: "+rs.getString("DirectorioOrigen")+" || "+"Dir. Destino: "+rs.getString("DirectorioDestino")+" || "+"Intervalo: " + rs.getString("IntervaloDias")+" || "+"Fecha: " + rs.getString("FechaUltimaCopia"));
 	                		if (ChronoUnit.DAYS.between(LocalDate.parse(rs.getString("FechaUltimaCopia")), LocalDate.now())>=rs.getInt("IntervaloDias")) {
 	                			System.out.println("Intervalo de días cumplido en el registro: "+rs.getInt("Id"));
 	                			copiaDisponible=true;
-	                			//Path dirOrigen=Paths.get(rs.getString("");
-	                			//Path dirDestino=Paths.get(rs.getString("");
-	                			//copiar(dirOrigen, dirDestino);
+	                			Path dirOrigen=Paths.get(rs.getString("DirectorioOrigen"));
+	                			Path dirDestino=Paths.get(rs.getString("DirectorioDestino"));
+	                			copiar(dirOrigen, dirDestino);
+	                			actualizarFechaUltimaCopia(rs.getInt("Id"));
 	                		};
 	                	}
-	                    // Agrega aquí más columnas según las necesidades
-	                } else {
-	                    System.err.println("No se encontró ningún registro con el ID proporcionado.");
-	                }
 	            }
 	        }		if (copiaDisponible) System.out.println("Copias realizadas."); else System.out.println("No hay copias a realizar.");
 	    } catch (SQLException ex) {
@@ -292,9 +281,61 @@ public class DefinicionCopiaDAO {
 	}
 	
 	public static boolean copiar(Path dirOrigen, Path dirDestino) {
+		if (dirOrigen==null||dirDestino==null) {
+			System.out.println("Faltan directorios por especificar."); 
+			return false;
+		}
 		
+		String fechaActual=LocalDate.now().format(DateTimeFormatter.ofPattern("yyMMdd"));
+		Path dirOri=dirOrigen;
+		int ultimoSlash=dirOrigen.toString().lastIndexOf("\\");
+		String dirOriNombre=dirOrigen.toString().substring(ultimoSlash);
+		Path dirDes=Paths.get(dirDestino.toString()+"\\"+dirOriNombre+"-"+fechaActual);
+				
+		try {if (!Files.exists(dirDes)) Files.createDirectories(dirDes);
+		} catch(Exception e){
+			System.out.println("Error al crear el directorio de destino.");
+			e.printStackTrace();
+			return false;
+		  }
 		
-		
+		try (Stream<Path> paths = Files.walk(dirOri)){
+			
+			//REVISAR///////////////////////////////////////////////////
+			paths.forEach(path -> {
+                   try {
+                        // Calculamos la ruta relativa dentro de pathOldDir
+                        Path relativePath = dirOri.relativize(path);
+                        // Obtenemos la ruta completa en el nuevo directorio
+                        Path targetPath = dirDes.resolve(relativePath);
+
+                        // Si es un directorio lo que lee el Stream, lo creamos
+                        if (Files.isDirectory(path)) {
+                            if (!Files.exists(targetPath)) {
+                                Files.createDirectories(targetPath);
+                            }
+                        }
+                        // Si es un archivo regular lo que lee el Stream, lo copiamos
+                        else if (Files.isRegularFile(path)) {
+                        	if (!Files.exists(targetPath)) {
+                                Files.createDirectories(targetPath.getParent()); // Asegurarse de que el directorio padre existe
+                                Files.copy(path, targetPath); // Copia el archivo
+                        	} else System.out.println("El archivo "+path.toString()+" ya existe, no se copia.");
+                        }
+                    } catch (IOException e) {
+                        System.out.println("Error copiando el archivo: " + path);
+                        e.printStackTrace();
+                    }
+                });
+				//REVISAR///////////////////////////////////////////////////
+
+				
+			} catch (Exception e) {
+				System.err.println("Error al copiar el directorio.");
+				e.printStackTrace();
+				return false;
+			}
+		System.out.println("Copia realizada en: "+dirDes.toString());
 		return true;
 	}
 	

@@ -1,26 +1,31 @@
-import java.time.LocalDate;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class Main2 {
-	/*
-	 * Hay que hacer que cumpruebe primero si hay una base de datos 
-	 * disponible (securalia.db) en el propio directorio donde se encuentra
-	 * el .jar, junto con SecuraliaP1.jar. Vale, esto ya lo hace la propia instancia de DAO.
-	 * 
-	 * Métodos que hacer:
-	 * 
-	 *  --- copiar(Path dirOrigen, Path dirDestino) (este método se ejecuta si se detecta que ha pasado el intervalo de días entre el actual
-	 * y la fecha establecida como fechaUltimaCopia)
-	 * 
-	 *  --- HECHO actualizarFechaUltimaCopia(int id) (este metodo se usará en copiar() para establecer ese campo en el dia actual)
-	 *  
-	 *  --- leerFechas() -> boolean (Calcula la diferencia de dias de las fechas de los registros en la DB con el dia
-	 *  actual, si ha pasado el intervalo de dias del respectivo registro, ejecuta copiar().
-	 */
+
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		//leerFechas();
-		//DefinicionCopiaDAO.actualizarFechaUltimaCopia(1);
-		DefinicionCopiaDAO.leerFechas();
-	}
 
+		DefinicionCopiaDAO.leerFechas();
+		crearTarea();
+
+	}
+	
+	public static void crearTarea() {
+        try { 
+        	String rutaJAR = Securalia2.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+        	Path path = Paths.get(rutaJAR);
+            // Ruta del archivo .bat que ejecutará tu programa .jar       )
+        	String tarea = "schtasks /create /tn \"Securalia2\" /tr \"java -jar \\\""+path.toAbsolutePath().toString()+"\\\"\" /sc onlogon";
+
+            // Ejecutamos el comando para crear la tarea programada
+            Process process = Runtime.getRuntime().exec(tarea);
+            process.waitFor();
+
+            System.out.println("Tarea programada creada correctamente.");
+        } catch (Exception e) {
+            System.out.println("Error al crear la tarea programada.");
+            e.printStackTrace();
+        }
+    }
 }
